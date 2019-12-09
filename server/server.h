@@ -49,6 +49,8 @@ static void make_all_users(struct user userList[]);
 
 static int login(char name[], char password[], struct user userList[]);
 
+static int logout(int id, struct user *user_list);
+
 static void logged_users(struct user userList[]);
 
 static void show_user_id(char name[], struct user user_list[]);

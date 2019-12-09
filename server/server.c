@@ -41,6 +41,12 @@ int login(char name[], char password[], struct user *user_list) // se usuário e
     return 0;
 }
 
+int logout(int id, struct user *user_list)
+{
+    user_list[id].status = 0;
+    return 0;
+}
+
 void logged_users(struct user *userList)
 {
     printf(">> Usuários logados:\n");

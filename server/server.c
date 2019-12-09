@@ -4,6 +4,9 @@
 #include "server.h"
 
 #define TOTAL_USERS 5
+#define NO_CODE -999
+#define DONT_EXIST -999
+#define NOT_FOUND -404
 
 struct user create_user(char name[], char password[]) // cria um usuário
 {
@@ -12,6 +15,7 @@ struct user create_user(char name[], char password[]) // cria um usuário
     strcpy(new_user.password, password);
     new_user.status = 0;
     new_user.inbox = (struct mailbox *)malloc(sizeof(struct mailbox));
+    //new_user.chat = (struct node *)malloc(sizeof(struct node));
     return new_user;
 }
 
@@ -67,6 +71,7 @@ void send_mail_message(int sender, int receiver, char message[], struct user *us
         new_message_index = user_list[receiver].inbox->total_messages;
         user_list[receiver].inbox->total_messages++;
         user_list[receiver].inbox->messages = realloc(user_list[receiver].inbox->messages, user_list[receiver].inbox->total_messages * sizeof(struct mail));
+        user_list[receiver].inbox->messages[new_message_index].from = sender;
         strcpy(user_list[receiver].inbox->messages[new_message_index].message, message);
     }
     else
@@ -76,6 +81,149 @@ void send_mail_message(int sender, int receiver, char message[], struct user *us
         user_list[receiver].inbox->messages[new_message_index].from = sender;
         strcpy(user_list[receiver].inbox->messages[0].message, message);
     }
+}
 
-    //user_list[receiver].inbox->total_messages++;
+void show_all_mail(int id, struct user user_list[])
+{
+    int total_messages = user_list[id].inbox->total_messages;
+
+    for (int i = 0; i < total_messages; i++)
+    {
+        int from = user_list[id].inbox->messages[i].from;
+        printf("----\n");
+        printf(">> De: %s\n", user_list[from].name);
+        printf(">> Mensagem: %s\n", user_list[id].inbox->messages[i].message);
+        printf("----\n");
+    }
+}
+
+void send_chat_message(int sender, int receiver, int code, char message[], struct user *user_list)
+{
+    struct direct new_message;
+    new_message.code = code;
+    new_message.from = sender;
+    strcpy(new_message.message, message);
+    user_list[receiver].chat = enqueue(user_list[receiver].chat, new_message);
+}
+
+void receive_chat_message(int id, int from_id, int code, struct user *user_list)
+{
+    struct direct dequeued_message;
+    dequeued_message = dequeue(user_list[id].chat, from_id, code);
+
+    if (dequeued_message.code == NOT_FOUND)
+    {
+        printf("----\n");
+        printf(">> Mensagem não encontrada.\n");
+        printf("----\n");
+        return;
+    }
+
+    if (dequeued_message.code != DONT_EXIST)
+    {
+        printf("----\n");
+        printf(">> De: %s\n", user_list[dequeued_message.from].name);
+        printf(">> Código: %d\n", dequeued_message.code);
+        printf(">> Mensagem: %s\n", dequeued_message.message);
+        printf("----\n");
+    }
+}
+
+// implementação da fila
+
+struct node *enqueue(struct node *head, struct direct message)
+{
+    struct node *new_node = malloc(sizeof(struct node));
+
+    new_node->message = message;
+    new_node->next = head;
+
+    head = new_node;
+
+    return head;
+}
+
+struct direct dequeue(struct node *head, int id, int code)
+{
+    struct node *current, *prev, *next_target = NULL;
+    struct node *target = NULL;
+    struct node *prev_target = NULL;
+    struct direct retrieved_message;
+
+    struct direct error_case;
+    struct direct not_found;
+    error_case.code = DONT_EXIST;
+    not_found.code = NOT_FOUND;
+
+    if (head == NULL)
+    {
+        printf(">> A fila de mensagens ainda não foi criada.\n");
+        return error_case;
+    }
+
+    current = head;
+
+    if (code == NO_CODE)
+    {
+        while (current->next != NULL)
+        {
+            if (current->message.from == id)
+            {
+                prev_target = prev;
+                target = current;
+                next_target = current->next;
+            }
+            prev = current;
+            current = current->next;
+        }
+
+        if (current->message.from == id)
+        {
+            prev_target = prev;
+            target = current;
+            next_target = current->next;
+        }
+    }
+    else
+    {
+        while (current->next != NULL)
+        {
+            if (current->message.from == id && current->message.code == code)
+            {
+                prev_target = prev;
+                target = current;
+                next_target = current->next;
+            }
+            prev = current;
+            current = current->next;
+        }
+
+        if (current->message.from == id && current->message.code == code)
+        {
+            prev_target = prev;
+            target = current;
+            next_target = current->next;
+        }
+    }
+
+    if (target == NULL)
+        return not_found;
+
+    if (next_target)
+    {
+        free(current);
+        current = prev_target;
+        current->next = next_target;
+    }
+    else
+    {
+        if (prev)
+            prev->next = NULL;
+        else
+            head = NULL;
+    }
+
+    retrieved_message = target->message;
+
+    return retrieved_message;
 }

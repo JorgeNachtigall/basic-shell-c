@@ -7,7 +7,7 @@ struct user
     char password[8];
     int status;            //deslogado = 0 | logado = 1
     struct mailbox *inbox; // simula uma caixa de entrada de email
-    struct direct *chat;   // simula um sistema de chat mais direto
+    struct node *chat;     // simula um sistema de chat mais direto
 };
 
 struct mailbox
@@ -33,6 +33,16 @@ struct direct
     char message[25];
 };
 
+struct node
+{
+    struct direct message;
+    struct node *next;
+};
+
+static struct node *enqueue(struct node *head, struct direct message);
+
+static struct direct dequeue(struct node *head, int id, int code);
+
 static struct user create_user(char name[], char password[]);
 
 static void make_all_users(struct user userList[]);
@@ -44,5 +54,11 @@ static void logged_users(struct user userList[]);
 static void show_user_id(char name[], struct user user_list[]);
 
 static void send_mail_message(int sender, int receiver, char message[], struct user user_list[]);
+
+static void show_all_mail(int id, struct user user_list[]);
+
+static void send_chat_message(int sender, int receiver, int code, char message[], struct user *user_list);
+
+static void receive_chat_message(int id, int from_id, int code, struct user *user_list);
 
 #endif

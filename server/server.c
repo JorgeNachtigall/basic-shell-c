@@ -1,12 +1,21 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 #include "server.h"
 
 #define TOTAL_USERS 5
 #define NO_CODE -999
 #define DONT_EXIST -999
 #define NOT_FOUND -404
+#define EXTERNAL_MQ_ID 10002
+
+struct mesg_buffer message;
+
+key_t key;
+int msgid;
 
 struct user create_user(char name[], char password[]) // cria um usuário
 {
@@ -47,25 +56,31 @@ int logout(int id, struct user *user_list)
     return 0;
 }
 
-void logged_users(struct user *userList)
+char *logged_users(struct user *userList)
 {
-    printf(">> Usuários logados:\n");
+    static char list[100] = "";
     for (int i = 0; i < TOTAL_USERS; i++)
     {
         if (userList[i].status == 1)
-            printf("- %s\n", userList[i].name);
+        {
+            strcat(list, "- ");
+            strcat(list, userList[i].name);
+            strcat(list, "\n");
+        }
     }
+    return list;
 }
 
-void show_user_id(char name[], struct user *user_list)
+int show_user_id(char name[], struct user *user_list)
 {
     for (int i = 0; i < TOTAL_USERS; i++)
     {
         if (strcmp(user_list[i].name, name) == 0)
         {
-            printf(">> Meu ID: %d\n", i);
+            return i;
         }
     }
+    return -1;
 }
 
 void send_mail_message(int sender, int receiver, char message[], struct user *user_list)
@@ -232,4 +247,17 @@ struct direct dequeue(struct node *head, int id, int code)
     retrieved_message = target->message;
 
     return retrieved_message;
+}
+
+void callback(char callback_message[])
+{
+    key = ftok("progfile", 65);
+    msgid = msgget(key, 0666 | IPC_CREAT);
+    message.mesg_type = 1;
+
+    printf("%s", callback_message);
+
+    strcpy(message.mesg_text, callback_message);
+    msgsnd(msgid, &message, sizeof(message), 0);
+    sleep(3);
 }

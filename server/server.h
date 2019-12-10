@@ -39,6 +39,12 @@ struct node
     struct node *next;
 };
 
+struct mesg_buffer
+{
+    long mesg_type;
+    char mesg_text[500];
+};
+
 static struct node *enqueue(struct node *head, struct direct message);
 
 static struct direct dequeue(struct node *head, int id, int code);
@@ -51,9 +57,9 @@ static int login(char name[], char password[], struct user userList[]);
 
 static int logout(int id, struct user *user_list);
 
-static void logged_users(struct user userList[]);
+static char *logged_users(struct user userList[]);
 
-static void show_user_id(char name[], struct user user_list[]);
+static int show_user_id(char name[], struct user user_list[]);
 
 static void send_mail_message(int sender, int receiver, char message[], struct user user_list[]);
 
@@ -62,5 +68,7 @@ static void show_all_mail(int id, struct user user_list[]);
 static void send_chat_message(int sender, int receiver, int code, char message[], struct user *user_list);
 
 static void receive_chat_message(int id, int from_id, int code, struct user *user_list);
+
+static void callback(char message[]);
 
 #endif

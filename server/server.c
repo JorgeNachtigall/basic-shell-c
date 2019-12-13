@@ -24,7 +24,7 @@ struct user create_user(char name[], char password[]) // cria um usuário
     strcpy(new_user.password, password);
     new_user.status = 0;
     new_user.inbox = (struct mailbox *)malloc(sizeof(struct mailbox));
-    //new_user.chat = (struct node *)malloc(sizeof(struct node));
+    new_user.chat = NULL;
     return new_user;
 }
 
@@ -106,50 +106,79 @@ void send_mail_message(int sender, int receiver, char message[], struct user *us
     }
 }
 
-void show_all_mail(int id, struct user user_list[])
+char *show_all_mail(int id, struct user user_list[])
 {
+    static char mails[500] = "";
+    memset(mails, 0, sizeof(mails));
+
     int total_messages = user_list[id].inbox->total_messages;
 
     for (int i = 0; i < total_messages; i++)
     {
         int from = user_list[id].inbox->messages[i].from;
-        printf("----\n");
-        printf(">> De: %s\n", user_list[from].name);
-        printf(">> Mensagem: %s\n", user_list[id].inbox->messages[i].message);
-        printf("----\n");
+        strcat(mails, "----\n>> De: ");
+        strcat(mails, user_list[from].name);
+        strcat(mails, "\n>> Mensagem: ");
+        strcat(mails, user_list[id].inbox->messages[i].message);
+        strcat(mails, "\n----\n");
     }
+    strcat(mails, "\0");
+    return mails;
 }
 
-void send_chat_message(int sender, int receiver, int code, char message[], struct user *user_list)
+char *send_chat_message(int sender, int receiver, int code, char message[], struct user *user_list)
 {
+    static char chat_return[50] = "";
+    memset(chat_return, 0, sizeof(chat_return));
     struct direct new_message;
     new_message.code = code;
     new_message.from = sender;
     strcpy(new_message.message, message);
-    user_list[receiver].chat = enqueue(user_list[receiver].chat, new_message);
+    if (user_list[receiver].status == 1)
+    {
+        user_list[receiver].chat = enqueue(user_list[receiver].chat, new_message);
+        strcpy(chat_return, ">> Mensagem de chat enviada!\n");
+        return chat_return;
+    }
+    else
+    {
+        strcpy(chat_return, ">> Mensagem não enviada, usuário offline!\n");
+        return chat_return;
+    }
 }
 
-void receive_chat_message(int id, int from_id, int code, struct user *user_list)
+char *receive_chat_message(int id, int from_id, int code, struct user *user_list)
 {
+    static char chat_get[500] = "";
+    memset(chat_get, 0, sizeof(chat_get));
     struct direct dequeued_message;
     dequeued_message = dequeue(user_list[id].chat, from_id, code);
 
     if (dequeued_message.code == NOT_FOUND)
     {
-        printf("----\n");
-        printf(">> Mensagem não encontrada.\n");
-        printf("----\n");
-        return;
+        strcat(chat_get, "----\n>> Mensagem não encontrada.\n----\n");
+        return chat_get;
     }
 
     if (dequeued_message.code != DONT_EXIST)
     {
-        printf("----\n");
-        printf(">> De: %s\n", user_list[dequeued_message.from].name);
-        printf(">> Código: %d\n", dequeued_message.code);
-        printf(">> Mensagem: %s\n", dequeued_message.message);
-        printf("----\n");
+        char code[10];
+
+        sprintf(code, "%d", dequeued_message.code);
+
+        strcat(chat_get, "----\n>> De: ");
+        strcat(chat_get, user_list[dequeued_message.from].name);
+        strcat(chat_get, "\n>> Código: ");
+        strcat(chat_get, code);
+        strcat(chat_get, "\n>> Mensagem: ");
+        strcat(chat_get, dequeued_message.message);
+        strcat(chat_get, "\n----\n");
+
+        return chat_get;
     }
+
+    strcpy(chat_get, ">> Fila de mensagens do usuário destino ainda não foi criada!\n");
+    return chat_get;
 }
 
 // implementação da fila
@@ -168,7 +197,9 @@ struct node *enqueue(struct node *head, struct direct message)
 
 struct direct dequeue(struct node *head, int id, int code)
 {
-    struct node *current, *prev, *next_target = NULL;
+    struct node *current = NULL;
+    struct node *next_target = NULL;
+    struct node *prev = NULL;
     struct node *target = NULL;
     struct node *prev_target = NULL;
     struct direct retrieved_message;

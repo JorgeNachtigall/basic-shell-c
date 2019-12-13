@@ -15,10 +15,14 @@ int main()
     int my_id;
 
     printf("-> Insira seu nome de usuário:\n");
-    scanf("%s", username);
+    fgets(username, 15, stdin);
+    //scanf("%s", username);
+    username[strcspn(username, "\n")] = '\0';
 
     printf("-> Insira sua senha:\n");
-    scanf("%s", password);
+    fgets(password, 15, stdin);
+    password[strcspn(password, "\n")] = '\0';
+    //scanf("%s", password);
 
     login(username, password);
 
@@ -37,16 +41,31 @@ int main()
         {
             msgid2 = msgget(key, 0666 | IPC_CREAT);
             msgid = msgget(10002, 0777 | IPC_CREAT);
-            char command[10] = "users";
+            char command[500];
             printf("$> ");
-            scanf("%s", command);
+            fgets(command, 500, stdin);
+            command[strcspn(command, "\n")] = ' ';
+            //scanf("%[^\n]s", command);
 
-            strcpy(message.mesg_text, command);
-            msgsnd(msgid, &message, sizeof(message), 0);
-            msgrcv(msgid2, &message, sizeof(message), 0, 0);
-            printf("%s", message.mesg_text);
+            char id[10];
+            sprintf(id, "%d", my_id);
 
-            memset(command, 0, sizeof(command));
+            if (strcmp(command, "exit ") != 0)
+            {
+                strcat(command, id);
+                strcpy(message.mesg_text, command);
+                msgsnd(msgid, &message, sizeof(message), 0);
+                msgrcv(msgid2, &message, sizeof(message), 0, 0);
+                printf("%s", message.mesg_text);
+                memset(command, 0, sizeof(command));
+            }
+            else
+            {
+                strcat(command, id);
+                strcpy(message.mesg_text, command);
+                msgsnd(msgid, &message, sizeof(message), 0);
+                return 0;
+            }
         }
     }
 

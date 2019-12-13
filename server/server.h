@@ -63,11 +63,11 @@ static int show_user_id(char name[], struct user user_list[]);
 
 static void send_mail_message(int sender, int receiver, char message[], struct user user_list[]);
 
-static void show_all_mail(int id, struct user user_list[]);
+static char *show_all_mail(int id, struct user user_list[]);
 
-static void send_chat_message(int sender, int receiver, int code, char message[], struct user *user_list);
+static char *send_chat_message(int sender, int receiver, int code, char message[], struct user *user_list);
 
-static void receive_chat_message(int id, int from_id, int code, struct user *user_list);
+static char *receive_chat_message(int id, int from_id, int code, struct user *user_list);
 
 static void callback(char message[]);
 

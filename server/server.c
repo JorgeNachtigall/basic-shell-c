@@ -15,7 +15,7 @@
 struct mesg_buffer message;
 
 key_t key;
-int msgid;
+int msgid2;
 
 struct user create_user(char name[], char password[]) // cria um usuário
 {
@@ -59,6 +59,7 @@ int logout(int id, struct user *user_list)
 char *logged_users(struct user *userList)
 {
     static char list[100] = "";
+    memset(list, 0, sizeof(list));
     for (int i = 0; i < TOTAL_USERS; i++)
     {
         if (userList[i].status == 1)
@@ -68,6 +69,7 @@ char *logged_users(struct user *userList)
             strcat(list, "\n");
         }
     }
+    strcat(list, "\0");
     return list;
 }
 
@@ -80,7 +82,7 @@ int show_user_id(char name[], struct user *user_list)
             return i;
         }
     }
-    return -1;
+    return 0;
 }
 
 void send_mail_message(int sender, int receiver, char message[], struct user *user_list)
@@ -252,12 +254,8 @@ struct direct dequeue(struct node *head, int id, int code)
 void callback(char callback_message[])
 {
     key = ftok("progfile", 65);
-    msgid = msgget(key, 0666 | IPC_CREAT);
+    msgid2 = msgget(key, 0666 | IPC_CREAT);
     message.mesg_type = 1;
-
-    printf("%s", callback_message);
-
     strcpy(message.mesg_text, callback_message);
-    msgsnd(msgid, &message, sizeof(message), 0);
-    sleep(3);
+    msgsnd(msgid2, &message, sizeof(message), 0);
 }

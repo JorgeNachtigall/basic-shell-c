@@ -13,11 +13,12 @@ struct mesg_buffer message;
 
 key_t key;
 int msgid;
+int msgid2;
 
 void login(char name[], char password[])
 {
-    key = ftok("progfile", 65);
-    msgid = msgget(key, 0666 | IPC_CREAT);
+
+    msgid = msgget(10002, 0777 | IPC_CREAT);
     message.mesg_type = 1;
 
     strcpy(message.mesg_text, "login ");

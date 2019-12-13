@@ -11,7 +11,6 @@ int main()
 
     char username[15] = "admin";
     char password[15] = "admin";
-    char command[10];
     int exit = 0;
     int my_id;
 
@@ -22,24 +21,32 @@ int main()
     scanf("%s", password);
 
     login(username, password);
-    sleep(1);
-    msgrcv(msgid, &message, sizeof(message), 0, 0);
 
-    memset(command, 0, sizeof(command));
+    key = ftok("progfile", 65);
+    msgid2 = msgget(key, 0666 | IPC_CREAT);
+
+    msgid = msgget(10002, 0777 | IPC_CREAT);
+    message.mesg_type = 1;
+
+    msgrcv(msgid2, &message, sizeof(message), 0, 0);
 
     if (strcmp(message.mesg_text, "Usuário ou senha incorretos!") != 0)
     {
         my_id = atoi(message.mesg_text);
         while (exit == 0)
         {
+            msgid2 = msgget(key, 0666 | IPC_CREAT);
+            msgid = msgget(10002, 0777 | IPC_CREAT);
+            char command[10] = "users";
             printf("$> ");
             scanf("%s", command);
 
             strcpy(message.mesg_text, command);
             msgsnd(msgid, &message, sizeof(message), 0);
-            sleep(1);
-            msgrcv(msgid, &message, sizeof(message), 0, 0);
+            msgrcv(msgid2, &message, sizeof(message), 0, 0);
             printf("%s", message.mesg_text);
+
+            memset(command, 0, sizeof(command));
         }
     }
 

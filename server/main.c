@@ -17,13 +17,13 @@ int main()
 
     key_t key;
     int msgid;
+    int msgid1;
+    int msgid2;
 
-    // ftok to generate unique key
-    key = ftok("progfile", 65);
+    msgid1 = msgget(10002, 0777 | IPC_CREAT);
 
-    // msgget creates a message queue
-    // and returns identifier
-    msgid = msgget(key, 0666 | IPC_CREAT);
+    printf("%d\n", msgid1);
+    printf("%d\n", msgid2);
 
     make_all_users(user_list);
 
@@ -34,7 +34,7 @@ int main()
 
     while (1)
     {
-        msgrcv(msgid, &message, sizeof(message), 0, 0);
+        msgrcv(msgid1, &message, sizeof(message), 0, 0);
         printf("Data Received is : %s \n", message.mesg_text);
 
         while (message.mesg_text[i] != ' ')
@@ -42,6 +42,8 @@ int main()
             if (message.mesg_text[i] == '\0')
             {
                 flag_break = 1;
+                j = 0;
+                i = 0;
                 break;
             }
             param1[j] = message.mesg_text[i];
@@ -60,6 +62,8 @@ int main()
                 if (message.mesg_text[i] == '\0')
                 {
                     flag_break = 1;
+                    j = 0;
+                    i = 0;
                     break;
                 }
                 param2[j] = message.mesg_text[i];
@@ -93,7 +97,7 @@ int main()
             if (login(param2, param3, user_list))
             {
                 char id[10];
-                sprintf(id, "%d", show_user_id(param1, user_list));
+                sprintf(id, "%d", show_user_id(param2, user_list));
                 callback(id);
             }
             else
@@ -103,8 +107,6 @@ int main()
         }
         else if (strcmp(param1, "users") == 0)
         {
-            //*holder = logged_users(user_list);
-            //printf("%s", holder);
             callback(logged_users(user_list));
         }
 
